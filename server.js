@@ -1,40 +1,37 @@
-var express = require('express');
-var bodyParser = require('body-parser');
-var crypto = require('crypto');
+let express = require('express');
+let bodyParser = require('body-parser');
+let crypto = require('crypto');
 const fs = require('fs');
 let child_process = require('child_process');
-var kill  = require('tree-kill');
+let kill  = require('tree-kill');
 let app = express();
-var request = require('request');
+let request = require('request');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-var chokidar = require('chokidar');
+let chokidar = require('chokidar');
 
-//chokidar.watch('results').on('all', (event, path) => {
-//  console.log(event, path);
-//});
+
 
 chokidar.watch("./results", {ignoreInitial : true,}).on("all", (event, path) => {
     console.log(event, path);
-    if (event == "add")
+    if (event == "add" && (path.search('entrylist') == -1))
         {
-            var req = request.post("https://endurance.simcentral.ru/results/add", function (err, resp, body) {
+            let req = request.post("https://endurance.simcentral.ru/results/test", function (err, resp, body) {
               if (err) {
                 console.log('Error!');
               } else {
-                console.log('URL: ' + body);
+                console.log('Response: ' + body);
               }
             });
-            var form = req.form();
-            form.append('event_id', '40');
+            let form = req.form();
+            let rawdata = fs.readFileSync('config.json');
+            let config = JSON.parse(rawdata);
+            form.append('event_id', config.event);
             console.log(path);
             form.append('results', fs.createReadStream('./' + path));
         }
 });
 
-//var watcher = chokidar.watch('results', {persistent: true});
-//watcher
-//  .on('all', function(path) {console.log('File', path, 'has been added');})
 
 app.post('/files', function(req, res){
     let rawdata = fs.readFileSync('config.json');
@@ -89,7 +86,7 @@ function startServer(time)
 }
 function generateNewToken()
 {
-    var token = crypto.randomBytes(32).toString('hex');
+    let token = crypto.randomBytes(32).toString('hex');
     return token;
 }
 
